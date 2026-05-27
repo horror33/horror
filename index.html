@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECHOES: OVERNIGHT - Enquête Paranormale FPS</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Moteur 3D Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="vignette"></div>
+    <div id="glitch-overlay"></div>
+    <div id="canvas-container"></div>
+    <div id="crosshair"></div>
+    <div id="interaction-prompt">Appuyez sur [E] pour interagir</div>
+
+    <!-- HUD Principal -->
+    <div id="hud">
+        <div class="hud-top">
+            <div class="status-container">
+                <div class="bar-container" title="Santé Mentale">
+                    <div id="sanity-fill" class="bar-fill"></div>
+                    <div class="bar-label">SANITY: <span id="sanity-val">100</span>%</div>
+                </div>
+                <div class="bar-container" title="Batterie globale">
+                    <div id="battery-fill" class="bar-fill"></div>
+                    <div class="bar-label">BATTERY: <span id="battery-val">100</span>%</div>
+                </div>
+            </div>
+
+            <div id="equipment-display" class="hud-panel">
+                <div>ÉQUIPEMENT ACTIF : <strong id="eq-name">Aucun</strong></div>
+                <div id="equipment-screen">STANDBY - Lampe frontale active (0% batt)</div>
+            </div>
+        </div>
+
+        <div id="notification-zone"></div>
+
+        <div class="hud-bottom">
+            <div class="hud-panel controls-remind">
+                Déplacement : ZQSD / Flèches | Courir : Shift | S'accroupir : Ctrl<br>
+                Inventaire : [TAB] | Journal de Preuves : [J] | Pause : [ÉCHAP]
+            </div>
+            <div class="hud-panel location-title" id="location-ui">
+                LIEU : MANOIR ABANDONNÉ
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Principal -->
+    <div id="menu-main" class="overlay">
+        <div class="menu-window static-center">
+            <h1>ECHOES: OVERNIGHT</h1>
+            <p class="subtitle">Simulateur d'Enquête Paranormale Avancé</p>
+            
+            <div class="stats-box">
+                <h3>Statistiques de Carrière (Sauvegarde Auto)</h3>
+                Enquêtes réussies : <span id="stats-win">0</span> | Entités ratées : <span id="stats-loss">0</span>
+            </div>
+
+            <button class="btn" id="btn-start-game">LANCER L'INVESTIGATION</button>
+            <p class="lock-notice">Une fois en jeu, cliquez sur l'écran pour verrouiller la souris.</p>
+        </div>
+    </div>
+
+    <!-- Inventaire [TAB] -->
+    <div id="menu-inventory" class="overlay hidden">
+        <div class="menu-window">
+            <h2>ÉQUIPEMENTS DISPONIBLES</h2>
+            <p class="hint">Sélectionnez l'outil à équiper en main gauche. La lampe frontale reste active d'office.</p>
+            
+            <div class="inventory-grid" id="inv-grid-container"></div>
+
+            <div class="inventory-footer">
+                <div id="inv-description">Sélectionnez un équipement pour voir ses caractéristiques.</div>
+                <button class="btn" id="btn-close-inventory">RETOURNER EN JEU [TAB]</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal [J] -->
+    <div id="menu-journal" class="overlay hidden">
+        <div class="menu-window">
+            <h2>JOURNAL DE L'ENQUÊTEUR</h2>
+            <p class="hint">Cochez les indices mesurés sur le terrain pour déduire l'identité de l'entité.</p>
+            
+            <div class="journal-layout">
+                <div class="journal-left">
+                    <h3>Preuves Récoltées</h3>
+                    <label class="evidence-checkbox"><input type="checkbox" data-evidence="emf5"> Émissions EMF Niveau 5</label>
+                    <label class="evidence-checkbox"><input type="checkbox" data-evidence="freezing"> Températures Glaciales (&lt; 0°C)</label>
+                    <label class="evidence-checkbox"><input type="checkbox" data-evidence="orbs"> Orbes Paranormales (Caméra)</label>
+                    <label class="evidence-checkbox"><input type="checkbox" data-evidence="evp"> Phénomène Vocal Électronique (Micro)</label>
+                    <label class="evidence-checkbox"><input type="checkbox" data-evidence="scanner"> Signature d'Ondes Distordues (Scanner)</label>
+                </div>
+                
+                <div class="journal-right">
+                    <div>
+                        <h3>Rapport de Conclusion</h3>
+                        <select id="ghost-select-conclusion">
+                            <option value="">-- Sélectionner l'entité --</option>
+                            <option value="Observateur">Observateur (Preuves: EMF5, Orbes)</option>
+                            <option value="Agressif">Agressif (Preuves: EMF5, Glacial)</option>
+                            <option value="Imitateur">Imitateur (Preuves: EVP, Orbes)</option>
+                            <option value="Trompeur">Trompeur (Preuves: Scanner, EMF5)</option>
+                            <option value="Silencieux">Silencieux (Preuves: Glacial, EVP)</option>
+                        </select>
+                    </div>
+
+                    <div class="warning-box">
+                        <strong>⚠️ ATTENTION :</strong> Quitter les lieux avec une mauvaise conclusion détruira votre réputation.
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-submit" id="btn-submit-investigation">REMONTER DANS LE CAMION</button>
+                        <button class="btn" id="btn-close-journal">RETOURNER AU JEU [J]</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran de Fin -->
+    <div id="menu-gameover" class="overlay hidden">
+        <div class="menu-window static-center">
+            <h1 id="gameover-title">MISSION TERMINÉE</h1>
+            <p id="gameover-text"></p>
+            <div id="gameover-details"></div>
+            <button class="btn" id="btn-restart">RETOURNER AU QUARTIER GÉNÉRAL</button>
+        </div>
+    </div>
+
+    <!-- Logique du jeu -->
+    <script src="game.js"></script>
+</body>
+</html>
